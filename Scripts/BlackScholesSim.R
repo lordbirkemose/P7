@@ -30,6 +30,6 @@ endTime <- Sys.time()
 simTime <- endTime - startTime
 
 BlackScholesData <- variableGrid %>% 
-  mutate(CHat = CHat)
+  mutate(C = C)
 
 write.csv(BlackScholesData, gzfile("./Data//BlackScholesData.csv.gz"), row.names = FALSE)
