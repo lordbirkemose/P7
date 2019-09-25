@@ -3,9 +3,9 @@ library(tidyr)
 library(dplyr)
 
 ### Grid --------------------------------------------------------------------------------
-S0 <- seq(1, 10, by = 0.1) # Current instrument price
-K <- seq(1, 10, by = 0.1) # Strike price
-r <- seq(0, 2.5, by = 1) # Risk free rate
+S0 <- seq(1, 10, by = 0.5) # Current instrument price
+K <- seq(1, 10, by = 0.5) # Strike price
+r <- seq(0, 2.5, by = 0.3) # Risk free rate
 MT <- seq(1, 10, by = 1) # Time to maturity
 sigma <- seq(1, 10, by = 0.5) # Volatility of the instrument
 
@@ -23,12 +23,13 @@ BlackScholesFun <- function(S0, K, r, MT, sigma) {
 
 ### Simulering --------------------------------------------------------------------------
 startTime <- Sys.time()
-CHat <- do.call(mapply, c(BlackScholesFun, unname(variableGrid)))
-endTime <- Sys.time()
 
+C <- do.call(mapply, c(BlackScholesFun, unname(variableGrid)))
+
+endTime <- Sys.time()
 simTime <- endTime - startTime
 
 BlackScholesData <- variableGrid %>% 
   mutate(CHat = CHat)
 
-write.csv(x = BlackScholesData, file = "./Data//BlackScholesData.csv", row.names = FALSE)
+write.csv(BlackScholesData, gzfile("./Data//BlackScholesData.csv.gz"), row.names = FALSE)
