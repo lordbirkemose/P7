@@ -7,7 +7,7 @@ library(neuralnet)
 data <- read.csv("./Data/BlackScholesData.csv.gz")
 
 set.seed(1)
-indTrain <- sample(nrow(data), nrow(data)*0.8)
+indTrain <- sample(nrow(data), nrow(data)*0.5)
 dataTrain <- data[indTrain,]
 dataTest <- data[-indTrain,]
 
@@ -20,7 +20,9 @@ nnBlackScholes <- neuralnet(C ~ S0 + K + r + MT + sigma, data = dataTrain,
                             stepmax = 1e+6,
                             learningrate.factor = list(minus = 0.5,
                                                        plus = 1.2),
-                            lifesign = "minimal")
+                            act.fct = "logistic",
+                            linear.output = TRUE, #Set F for apply act.fct on output
+                            lifesign = "full")
 
 endTime <- Sys.time()
 trainTime <- endTime - startTime
