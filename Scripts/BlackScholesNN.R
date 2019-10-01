@@ -7,7 +7,7 @@ library(neuralnet)
 data <- read.csv("./Data/BlackScholesData.csv.gz")
 
 set.seed(1)
-indTrain <- sample(nrow(data), nrow(data)*0.5)
+indTrain <- sample(nrow(data), nrow(data)*0.001)
 dataTrain <- data[indTrain,]
 dataTest <- data[-indTrain,]
 
@@ -15,8 +15,9 @@ dataTest <- data[-indTrain,]
 startTime <- Sys.time()
 
 nnBlackScholes <- neuralnet(C ~ S0 + K + r + MT + sigma, data = dataTrain, 
-                            hidden = c(30,30),
-                            threshold = 0.01,
+                            hidden = c(30, 30, 30, 30),
+                            rep = 1,
+                            threshold = 0.1,
                             stepmax = 1e+6,
                             learningrate.factor = list(minus = 0.5,
                                                        plus = 1.2),
