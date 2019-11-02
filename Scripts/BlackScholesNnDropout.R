@@ -37,27 +37,30 @@ dimnames(dataTestTarget) <- NULL
 
 ### Construction the model ---------------------------------------------------
 
-BlackScholesNNKeras <- keras_model_sequential()
+BlackScholesNnDropout <- keras_model_sequential()
 
-BlackScholesNNKeras %>% 
+BlackScholesNnDropout %>% 
   layer_dense(units = 30, activation = 'elu', 
               input_shape = dim(dataTest)[2]) %>% 
   layer_dense(units = 30, activation = 'elu') %>% 
+  layer_dropout(rate = 0.5) %>% 
   layer_dense(units = 30, activation = 'elu') %>% 
+  layer_dropout(rate = 0.5) %>%
   layer_dense(units = 30, activation = 'elu') %>% 
+  layer_dropout(rate = 0.5) %>%
   layer_dense(units = 1)
 
 earlyStop <- callback_early_stopping(monitor = "val_loss", patience = 50)
 
 ### Compile and fit ----------------------------------------------------------
 
-BlackScholesNNKeras %>% compile(
+BlackScholesNnDropout %>% compile(
   loss = 'mse', 
   optimizer = optimizer_rmsprop(lr = 0.001, rho = 0.9), 
   metrics = 'mean_absolute_error'
 )
 
-history <- BlackScholesNNKeras %>% 
+history <- BlackScholesNnDropout %>% 
   fit(
     dataTrain,
     dataTrainTarget,
@@ -74,9 +77,9 @@ plot(history)
 
 ### Predict ------------------------------------------------------------------
 
-testPredict <- BlackScholesNNKeras %>% 
+testPredict <- BlackScholesNnDropout %>% 
   predict(dataTest)
-trainPredict <- BlackScholesNNKeras %>% 
+trainPredict <- BlackScholesNnDropout %>% 
   predict(dataTrain)
 
 testResidual <- dataTestTarget - testPredict
@@ -84,5 +87,5 @@ trainResidual <- dataTrainTarget - trainPredict
 plot(testResidual)
 
 # Saving model ---------------------------------------------------------------
-save_model_hdf5(BlackScholesNNKeras, 
-                "./Workspaces//BlackScholesNNKerasBS500.h5")
+save_model_hdf5(BlackScholesNnDropout, 
+                "./Workspaces//BlackScholesNnDropout.h5")
