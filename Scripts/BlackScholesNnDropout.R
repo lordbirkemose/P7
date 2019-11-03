@@ -64,8 +64,8 @@ history <- BlackScholesNnDropout %>%
   fit(
     dataTrain,
     dataTrainTarget,
-    epochs = 1000,
-    batch_size = 500, 
+    epochs = 200,
+    batch_size = 50, 
     validation_split = 0.2,
     verbose = 1,
     callbacks = list(earlyStop)
@@ -82,6 +82,9 @@ testPredict <- BlackScholesNnDropout %>%
 trainPredict <- BlackScholesNnDropout %>% 
   predict(dataTrain)
 
+dataTrain <- dataTrain %>% 
+  
+
 testResidual <- dataTestTarget - testPredict
 trainResidual <- dataTrainTarget - trainPredict
 plot(testResidual)
@@ -89,3 +92,4 @@ plot(testResidual)
 # Saving model ---------------------------------------------------------------
 save_model_hdf5(BlackScholesNnDropout, 
                 "./Workspaces//BlackScholesNnDropout.h5")
+save()

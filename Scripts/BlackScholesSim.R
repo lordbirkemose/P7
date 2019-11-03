@@ -5,8 +5,9 @@ library(dplyr)
 ### Grid ---------------------------------------------------------------------
 S0 <- seq(305, 308, by = 0.5) # Current instrument price
 K <- seq(1, 200, by = 1) # Strike price
-r <- seq(0, 2.5, by = 0.3) # Risk free rate
 MT <- seq(1, 10, by = 1) # Time to maturity
+# r <- seq(0, 2.5, by = 0.3) # Risk free rate
+r <- 0.0153*MT/91.5
 sigma <- seq(1, 10, by = 0.5) # Volatility of the instrument
 
 variableGrid <- expand.grid(S0 = S0, r = r, sigma = sigma, K = K, MT = MT)
