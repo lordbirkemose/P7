@@ -3,8 +3,8 @@ library(tidyr)
 library(dplyr)
 
 ### Grid ---------------------------------------------------------------------
-S0 <- seq(305, 308, by = 0.5) # Current instrument price
-K <- seq(1, 200, by = 1) # Strike price
+S0 <- seq(305, 308, by = 1) # Current instrument price
+K <- seq(200, 350, by = 2) # Strike price
 MT <- seq(1, 10, by = 1) # Time to maturity
 # r <- seq(0, 2.5, by = 0.3) # Risk free rate
 r <- 0.0153*MT/91.5

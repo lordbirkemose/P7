@@ -6,8 +6,29 @@ require("tidyr")
 require("dplyr")
 require("ggplot2")
 
-### Load data ----------------------------------------------------------------
-data <- read.csv("./Data/BlackScholesData.csv.gz")
+### Data simulation  ---------------------------------------------------------
+S0 <- seq(305, 308, by = 1) # Current instrument price
+K <- seq(200, 350, by = 2) # Strike price
+MT <- seq(1, 10, by = 1) # Time to maturity
+# r <- seq(0, 2.5, by = 0.3) # Risk free rate
+r <- 0.0153*MT/91.5
+sigma <- seq(1, 10, by = 0.5) # Volatility of the instrument
+
+variableGrid <- expand.grid(S0 = S0, r = r, sigma = sigma, K = K, MT = MT)
+
+BlackScholesFun <- function(S0, K, r, MT, sigma) {
+  d1 <- (log(S0/K) + (r + sigma^2/2)*MT)/(sigma*sqrt(MT))
+  d2 <- d1 - sigma*sqrt(MT)
+  
+  C <- pnorm(d1)*S0 - pnorm(d2)*K*exp(-r*MT)
+  
+  return(C)
+}
+
+C <- do.call(mapply, c(BlackScholesFun, unname(variableGrid)))
+
+BlackScholesData <- variableGrid %>% 
+  mutate(C = C)
 
 ### Test and training set ----------------------------------------------------
 set.seed(123)
@@ -48,7 +69,7 @@ BlackScholesNnDropout %>%
   layer_dropout(rate = 0.5) %>%
   layer_dense(units = 30, activation = 'elu') %>% 
   layer_dropout(rate = 0.5) %>%
-  layer_dense(units = 1)
+  layer_dense(units = 1, activation = "linear")
 
 earlyStop <- callback_early_stopping(monitor = "val_loss", patience = 50)
 
@@ -60,7 +81,7 @@ BlackScholesNnDropout %>% compile(
   metrics = 'mean_absolute_error'
 )
 
-history <- BlackScholesNnDropout %>% 
+BlackScholesNnDropout %>% 
   fit(
     dataTrain,
     dataTrainTarget,
@@ -71,10 +92,6 @@ history <- BlackScholesNnDropout %>%
     callbacks = list(earlyStop)
   )
 
-### Visualize the model training history -------------------------------------
-
-plot(history)
-
 ### Predict ------------------------------------------------------------------
 
 testPredict <- BlackScholesNnDropout %>% 
@@ -82,14 +99,14 @@ testPredict <- BlackScholesNnDropout %>%
 trainPredict <- BlackScholesNnDropout %>% 
   predict(dataTrain)
 
-dataTrain <- dataTrain %>% 
-  
-
-testResidual <- dataTestTarget - testPredict
-trainResidual <- dataTrainTarget - trainPredict
-plot(testResidual)
+dataTrain <- data[indTrain] %>% 
+  mutate(cHat = testPredict)
+dataTest <- data[-indTrain] %>% 
+  mutate(cHat = trainPredict)
 
 # Saving model ---------------------------------------------------------------
 save_model_hdf5(BlackScholesNnDropout, 
                 "./Workspaces//BlackScholesNnDropout.h5")
-save()
+
+save(dataTrain, dataTest,
+     file = "./Workspaces//BlackScholesNnData.Rdata")
