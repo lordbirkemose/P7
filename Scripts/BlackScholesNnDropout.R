@@ -6,6 +6,10 @@ require("tidyr")
 require("dplyr")
 require("ggplot2")
 
+### Tensorflow setup ---------------------------------------------------------
+Sys.setenv(WORKON_HOME="/q/student/mnorda16")
+install_tensorflow()
+
 ### Data simulation  ---------------------------------------------------------
 S0 <- seq(305, 308, by = 1) # Current instrument price
 K <- seq(200, 350, by = 2) # Strike price
