@@ -27,7 +27,7 @@ BlackScholesFun <- function(S0, K, r, MT, sigma) {
 
 C <- do.call(mapply, c(BlackScholesFun, unname(variableGrid)))
 
-BlackScholesData <- variableGrid %>% 
+data <- variableGrid %>% 
   mutate(C = C)
 
 ### Test and training set ----------------------------------------------------
