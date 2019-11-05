@@ -3,7 +3,7 @@ library(tidyverse)
 library(magrittr)
 
 ### Load data ----------------------------------------------------------------
-load("./Workspaces//BlackScholesNnData.Rdata")
+load("./Workspaces//BlackScholesNnDataTest.Rdata")
 
 ### Test set -----------------------------------------------------------------
 
@@ -19,3 +19,4 @@ ggplot(data = dataPlot, aes(y = MT, x = K, fill = MAE)) +
   labs(title  = "Mean absolute error",
        x = "Strike",
        y = "Maturity")
+
