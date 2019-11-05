@@ -10,34 +10,11 @@ require("ggplot2")
 Sys.setenv(WORKON_HOME="/q/student/mnorda16")
 install_tensorflow()
 
-### Data simulation  ---------------------------------------------------------
-S0 <- seq(305, 308, by = 1) # Current instrument price
-K <- seq(200, 350, by = 2) # Strike price
-MT <- seq(1, 10, by = 1) # Time to maturity
-# r <- seq(0, 2.5, by = 0.3) # Risk free rate
-r <- 0.0153*MT/91.5
-sigma <- seq(0.1, 1, by = 0.1) # Volatility of the instrument
+### Load data ----------------------------------------------------------------
 
-variableGrid <- expand.grid(S0 = S0, K = K, r = r, MT = MT, sigma = sigma)
-
-BlackScholesFun <- function(S0, K, r, MT, sigma) {
-  d1 <- (log(S0/K) + (r + sigma^2/2)*MT)/(sigma*sqrt(MT))
-  d2 <- d1 - sigma*sqrt(MT)
-  
-  C <- pnorm(d1)*S0 - pnorm(d2)*K*exp(-r*MT)
-  
-  return(C)
-}
-
-C <- mapply(BlackScholesFun, 
-            S0 = variableGrid$S0,
-            K = variableGrid$K,
-            r = variableGrid$r,
-            MT = variableGrid$MT, 
-            sigma = variableGrid$sigma)
-
-data <- variableGrid %>% 
-  mutate(C = C)
+data <- read.csv("./Data//BlackScholesData.csv.gz")
+minData <- min(data)
+maxData <- max(data)
 
 ### Test and training set ----------------------------------------------------
 
@@ -45,12 +22,12 @@ set.seed(123)
 
 indTrain <- sample(nrow(data), nrow(data)*0.75)
 
-dataTrain <- (2*data[indTrain, ]- max(data) - min(data))/
-  (max(data) - min(data)) %>% 
+dataTrain <- (2*data[indTrain, ] - maxData - minData)/(maxData - minData)
+dataTrain <- dataTrain %>% 
   select(-C) %>% 
   as.matrix()
-dataTest <- (2*data[-indTrain, ]- max(data) - min(data))/
-  (max(data) - min(data)) %>% 
+dataTest <- (2*data[-indTrain, ] - maxData - minData)/(maxData - minData)
+dataTest <- dataTest %>% 
   select(-C) %>% 
   as.matrix()
 
@@ -58,10 +35,12 @@ dimnames(dataTrain) <- NULL
 dimnames(dataTest) <- NULL
 
 dataTrainTarget <- data[indTrain, ] %>% 
+  mutate(C = (2*C - maxData - minData)/(maxData - minData)) %>% 
   select(C) %>% 
   as.matrix()
 
 dataTestTarget <- data[-indTrain, ] %>% 
+  mutate(C = (2*C - maxData - minData)/(maxData - minData)) %>% 
   select(C) %>% 
   as.matrix()
 
@@ -114,15 +93,20 @@ trainPredict <- BlackScholesNnDropout %>%
   predict(dataTrain)
 
 dataTrain <- data[indTrain,] %>% 
-  mutate(cHat = trainPredict)
+  mutate(cHat = (trainPredict*(maxData - minData) + 
+                   (maxData + minData))/2)
 dataTest <- data[-indTrain,] %>% 
-  mutate(cHat = testPredict)
+  mutate(cHat = (testPredict*(max(data) - min(data)) + 
+                   (maxData + minData))/2)
 
 # Saving model ---------------------------------------------------------------
 save_model_hdf5(BlackScholesNnDropout, 
                 "./Workspaces//BlackScholesNnDropout.h5")
 
-save(dataTrain, dataTest,
-     file = "./Workspaces//BlackScholesNnData.Rdata")
+save(dataTest,
+     file = "./Workspaces//BlackScholesNnDataTest.Rdata")
 
-# quit("no")
+write.csv(dataTrain, gzfile("./Workspaces//BlackScholesDataTrain.csv.gz"), 
+          row.names = FALSE)
+
+quit("no")
