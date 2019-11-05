@@ -16,6 +16,6 @@ dataPlot <- dataTest %>%
 
 ggplot(data = dataPlot, aes(y = MT, x = K, fill = MAE)) +
   geom_tile() +
-  labs(title  = "Mean square error",
+  labs(title  = "Mean absolute error",
        x = "Strike",
        y = "Maturity")

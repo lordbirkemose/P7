@@ -36,18 +36,21 @@ C <- mapply(BlackScholesFun,
             MT = variableGrid$MT, 
             sigma = variableGrid$sigma)
 
-BlackScholesData <- variableGrid %>% 
+data <- variableGrid %>% 
   mutate(C = C)
 
 ### Test and training set ----------------------------------------------------
+
 set.seed(123)
 
 indTrain <- sample(nrow(data), nrow(data)*0.75)
 
-dataTrain <- data[indTrain, ] %>% 
+dataTrain <- (2*data[indTrain, ]- max(data) - min(data))/
+  (max(data) - min(data)) %>% 
   select(-C) %>% 
   as.matrix()
-dataTest <- data[-indTrain, ] %>% 
+dataTest <- (2*data[-indTrain, ]- max(data) - min(data))/
+  (max(data) - min(data)) %>% 
   select(-C) %>% 
   as.matrix()
 
@@ -70,13 +73,13 @@ dimnames(dataTestTarget) <- NULL
 BlackScholesNnDropout <- keras_model_sequential()
 
 BlackScholesNnDropout %>% 
-  layer_dense(units = 30, activation = 'elu', 
+  layer_dense(units = 50, activation = 'elu', 
               input_shape = dim(dataTest)[2]) %>% 
-  layer_dense(units = 30, activation = 'elu') %>% 
+  layer_dense(units = 50, activation = 'elu') %>% 
   layer_dropout(rate = 0.5) %>% 
-  layer_dense(units = 30, activation = 'elu') %>% 
+  layer_dense(units = 50, activation = 'elu') %>% 
   layer_dropout(rate = 0.5) %>%
-  layer_dense(units = 30, activation = 'elu') %>% 
+  layer_dense(units = 50, activation = 'elu') %>% 
   layer_dropout(rate = 0.5) %>%
   layer_dense(units = 1, activation = "linear")
 
@@ -90,16 +93,18 @@ BlackScholesNnDropout %>% compile(
   metrics = 'mean_absolute_error'
 )
 
-BlackScholesNnDropout %>% 
+history <- BlackScholesNnDropout %>% 
   fit(
     dataTrain,
     dataTrainTarget,
-    epochs = 200,
+    epochs = 1000,
     batch_size = 50, 
     validation_split = 0.2,
     verbose = 1,
     callbacks = list(earlyStop)
   )
+
+plot(history)
 
 ### Predict ------------------------------------------------------------------
 
