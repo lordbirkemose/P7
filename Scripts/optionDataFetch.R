@@ -7,14 +7,16 @@ library(tidyr)
 ### Fetch function -----------------------------------------------------------
 
 optionDataFetch <- function(RootSymbol, ExpYear) {
-  Start <- lubridate::today()
+  ifelse(lubridate::hour(Sys.time()) <= 16, 
+         Start <- lubridate::today(), 
+         Start <- lubridate::today() - 1)
   
   quantmod::getSymbols(RootSymbol, 
                        from = Start, 
                        to = Start, 
                        src =  "yahoo", 
                        adjust =  TRUE)
-  S0 <- Cl(get(RootSymbol)) %>% 
+  S0 <- quantmod::Op(get(RootSymbol)) %>% 
     zoo::coredata()
   
   optionChain <- quantmod::getOptionChain(RootSymbol, ExpYear)

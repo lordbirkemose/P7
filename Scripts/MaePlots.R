@@ -4,14 +4,10 @@ library(magrittr)
 
 ### Load data ----------------------------------------------------------------
 load("./Workspaces//BlackScholesNnData.Rdata")
-data <- read.csv("./Data/BlackScholesData.csv.gz")
 
 ### Test set -----------------------------------------------------------------
 
-cHat <- rnorm(nrow(data))
-data %<>% mutate(cHat = cHat)
-
-dataPlot <- data %>% 
+dataPlot <- dataTest %>% 
   group_by(K, MT) %>% 
   summarise(n = n(),
             diff = sum(abs(C - cHat))) %>% 
