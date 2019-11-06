@@ -3,12 +3,12 @@ library(tidyr)
 library(dplyr)
 
 ### Grid ---------------------------------------------------------------------
-S0 <- seq(305, 308, by = 1) # Current instrument price
-K <- seq(200, 350, by = 2) # Strike price
-MT <- seq(1, 10, by = 1) # Time to maturity
+S0 <- 306.17 # Current instrument price
+K <- seq(200, 350, by = 1) # Strike price
+MT <- seq(1, 30, by = 1) # Time to maturity
 # r <- seq(0, 2.5, by = 0.3) # Risk free rate
 r <- 0.0153*MT/91.5
-sigma <- seq(0.1, 1, by = 0.1) # Volatility of the instrument
+sigma <- seq(0.1, 1, by = 0.01) # Volatility of the instrument
 
 variableGrid <- expand.grid(S0 = S0, K = K, r = r, MT = MT, sigma = sigma)
 
