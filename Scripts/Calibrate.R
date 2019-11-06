@@ -3,6 +3,7 @@ library(tidyverse)
 library(magrittr)
 library(keras)
 library(tensorflow)
+library(plotly)
 install_tensorflow()
 
 ### Get data -----------------------------------------------------------------
@@ -44,15 +45,37 @@ sigmaOptim <- optim(sigma0, funcCalibrate, lower = lB, upper = uB,
 
 ### Plots with sigmaOptim ----------------------------------------------------
 
-dataPlot <- dataTest %>% 
+pal <- wes_palette("Zissou1", 100, type = "continuous")
+
+nnPredict <- BlackScholesNnDropout %>%  
+  predict(cbind(variableRange, rep(sigmaOptim$par, n)))
+
+dataHeatmap <- SPY %>% 
+  mutate(cHat = nnPredict) %>% 
   group_by(K, MT) %>% 
   summarise(n = n(),
             diff = sum(abs(C - cHat))) %>% 
-  mutate(MAE = diff/n) %>% 
-  select(K, MT, MAE)
+  mutate(MAE = diff/n)
 
-ggplot(data = dataPlot, aes(y = MT, x = K, fill = MAE)) +
+ggplot(data = dataHeatmap, aes(y = MT, x = K, fill = MAE)) +
   geom_tile() +
-  labs(title  = "Dropout 1000 epochs 100 batch",
+  labs(title  = "Calibrated vs actually",
        x = "Strike",
-       y = "Maturity")
+       y = "Maturity") +
+  scale_fill_gradientn(colours = pal)
+
+
+dataPlot <- SPY %>% 
+  mutate(cHat = nnPredict) %>% 
+  filter(K == 300)
+
+ggplot(data = dataPlot, aes(x = MT)) +
+  geom_line(aes(y = C, colour = "Black and Scholes")) + 
+  geom_line(aes(y = cHat, colour = "Neural network")) +
+  labs(title = "Strike: 300") +
+  xlab("Time to maturity") +
+  ylab("Price in US$") +
+  scale_colour_manual("", values = c("Black and Scholes" = "#ffb347", 
+                                     "Neural network" = "#aec6cf"))
+
+

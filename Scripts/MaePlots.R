@@ -1,6 +1,10 @@
 ### Packages -----------------------------------------------------------------
 library(tidyverse)
 library(magrittr)
+library(wesanderson)
+
+### Colors -------------------------------------------------------------------
+pal <- wes_palette("Zissou1", 100, type = "continuous")
 
 ### Dropout 200 epochs 25 batch ----------------------------------------------
 load("./Workspaces//BlackScholesNnDataTest.Rdata")
@@ -16,7 +20,8 @@ ggplot(data = dataPlot, aes(y = MT, x = K, fill = MAE)) +
   geom_tile() +
   labs(title  = "Dropout 200 epochs 25 batch",
        x = "Strike",
-       y = "Maturity")
+       y = "Maturity") + 
+  scale_fill_gradientn(colours = pal)
 
 ### Dropout 1000 epochs 100 batch --------------------------------------------
 load("./Workspaces//BlackScholesNnDataTest1000Epochs.Rdata")
@@ -32,5 +37,6 @@ ggplot(data = dataPlot, aes(y = MT, x = K, fill = MAE)) +
   geom_tile() +
   labs(title  = "Dropout 1000 epochs 100 batch",
        x = "Strike",
-       y = "Maturity")
-
+       y = "Maturity") + 
+  scale_fill_gradientn(colours = pal)
+  
