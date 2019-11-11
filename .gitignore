@@ -3,3 +3,5 @@
 .RData
 .gz
 P7.Rproj
+*.eps
+Plots/

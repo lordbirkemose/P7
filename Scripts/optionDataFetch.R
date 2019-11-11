@@ -8,8 +8,8 @@ library(tidyr)
 
 optionDataFetch <- function(RootSymbol, ExpYear) {
   ifelse(lubridate::hour(Sys.time()) <= 16, 
-         Start <- lubridate::today(), 
-         Start <- lubridate::today() - 1)
+         Start <- lubridate::today() - 1, 
+         Start <- lubridate::today())
   
   quantmod::getSymbols(RootSymbol, 
                        from = Start, 
@@ -43,3 +43,29 @@ lapply(1:length(symbols), function(i) {
     write.csv(file = paste0(path, symbols[i], ".csv"), row.names = FALSE)
   }
 )
+
+### Extend SPY ---------------------------------------------------------------
+Start <- lubridate::today() - 1
+quantmod::getSymbols("SPY",
+                     from = Start,
+                     src =  "yahoo",
+                     adjust =  TRUE)
+S0 <- SPY$SPY.Close[1] %>% zoo::coredata()
+optionChain <- getOptionChain("SPY", "2019/2020")
+data <- do.call(rbind, lapply(optionChain,
+                              function(x) do.call(rbind, x)))
+data <- data %>%
+  mutate(Tt = as.Date(substr(row.names(data), 1, 11), "%b.%d.%Y"),
+         Type = ifelse(substr(row.names(data), 13, 13) == "c",
+                       "call", "put"),
+         Start = Start,
+         S0 = S0) %>%
+  select(Start, S0, K = Strike, Tt, Type, P = Last)
+
+data <- as_tibble(data)
+
+SPY <- read_csv("./Data//SPY.csv")
+
+dataNew <- rbind(SPY, data)
+
+write.csv(x = dataNew, file = "./Data//SPY.csv", row.names = FALSE)

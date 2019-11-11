@@ -3,21 +3,52 @@ library(tidyverse)
 library(magrittr)
 library(keras)
 library(tensorflow)
-library(plotly)
 install_tensorflow()
 
 ### Get data -----------------------------------------------------------------
+S0 <- seq(305, 309, by = 1) # Current instrument price
+K <- seq(200, 350, by = 1) # Strike price
+MT <- seq(1, 30, by = 1) # Time to maturity
+# r <- seq(0, 2.5, by = 0.3) # Risk free rate
+r <- seq(1, 30, by = 2)*0.0153/91.5
+sigma <- seq(0.1, 1, by = 0.05) # Volatility of the instrument
+
+variableGrid <- expand.grid(S0 = S0, K = K, r = r, MT = MT, sigma = sigma)
+
+BlackScholesFun <- function(S0, K, r, MT, sigma) {
+  d1 <- (log(S0/K) + (r + sigma^2/2)*MT)/(sigma*sqrt(MT))
+  d2 <- d1 - sigma*sqrt(MT)
+  
+  C <- pnorm(d1)*S0 - pnorm(d2)*K*exp(-r*MT)
+  
+  return(C)
+}
+
+C <- mapply(BlackScholesFun, 
+            S0 = variableGrid$S0,
+            K = variableGrid$K,
+            r = variableGrid$r,
+            MT = variableGrid$MT, 
+            sigma = variableGrid$sigma)
+
+data <- variableGrid %>% 
+  mutate(C = C)
+
+minData <- min(data)
+maxData <- max(data)
+
 
 SPY <- read.csv("./Data//SPY.csv") %>% 
-  filter(Type == "call") %>% 
+  filter(Type == "call", K >= 200) %>% 
   mutate(MT = as.numeric(as.Date(Tt) - as.Date(Start)),
          r = 0.0153/91.5*MT) %>% 
   select(S0, K, r, MT, C = P)
 
-BlackScholesNnDropout <- load_model_hdf5(paste0("./Workspaces//",
-                                                "BlackScholesNnDropout.h5"))
+NN <- load_model_hdf5(paste0("~/Desktop//P7//LargeDataFromServer"
+                             ,"//BlackScholesNn.h5"))
 
-variableRange <- SPY %>% 
+variableRange <- (2*SPY - maxData - minData)/(maxData - minData) 
+variableRange %<>% 
   select(-C) %>%
   set_colnames(NULL) %>% 
   as.matrix()
@@ -28,7 +59,7 @@ n <- nrow(variableRange)
 
 funcCalibrate <- function(sigma) {
   
-  nnPredict <- BlackScholesNnDropout %>%  
+  nnPredict <- NN %>%  
     predict(cbind(variableRange, rep(sigma, n)))
   
   return(sum(abs(nnPredict - SPY$C)^2))
@@ -36,46 +67,13 @@ funcCalibrate <- function(sigma) {
 
 ### Calibration --------------------------------------------------------------
 
-sigma0 <- 0.1
-lB     <- 0
-uB     <- 100
+sigma0 <- 1
+lB     <- 0.001
+uB     <- 5
 
-sigmaOptim <- optim(sigma0, funcCalibrate, lower = lB, upper = uB, 
-                    method = "L-BFGS-B", control=list(trace=TRUE, maxit= 500))
+sigmaOptim <- optim(sigma0, funcCalibrate, 
+                    lower = lB, upper = uB, 
+                    method = "L-BFGS-B", 
+                    control = list(trace = TRUE, maxit = 500))
 
-### Plots with sigmaOptim ----------------------------------------------------
-
-pal <- wes_palette("Zissou1", 100, type = "continuous")
-
-nnPredict <- BlackScholesNnDropout %>%  
-  predict(cbind(variableRange, rep(sigmaOptim$par, n)))
-
-dataHeatmap <- SPY %>% 
-  mutate(cHat = nnPredict) %>% 
-  group_by(K, MT) %>% 
-  summarise(n = n(),
-            diff = sum(abs(C - cHat))) %>% 
-  mutate(MAE = diff/n)
-
-ggplot(data = dataHeatmap, aes(y = MT, x = K, fill = MAE)) +
-  geom_tile() +
-  labs(title  = "Calibrated vs actually",
-       x = "Strike",
-       y = "Maturity") +
-  scale_fill_gradientn(colours = pal)
-
-
-dataPlot <- SPY %>% 
-  mutate(cHat = nnPredict) %>% 
-  filter(K == 300)
-
-ggplot(data = dataPlot, aes(x = MT)) +
-  geom_line(aes(y = C, colour = "Black and Scholes")) + 
-  geom_line(aes(y = cHat, colour = "Neural network")) +
-  labs(title = "Strike: 300") +
-  xlab("Time to maturity") +
-  ylab("Price in US$") +
-  scale_colour_manual("", values = c("Black and Scholes" = "#ffb347", 
-                                     "Neural network" = "#aec6cf"))
-
-
+sigma <- (sigmaOptim$par*(maxData - minData) + (maxData + minData))/2
