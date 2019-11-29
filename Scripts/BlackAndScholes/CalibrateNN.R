@@ -1,6 +1,7 @@
 ### Packages -----------------------------------------------------------------
 library(tidyverse)
 library(magrittr)
+library(microbenchmark)
 library(keras)
 library(tensorflow)
 install_tensorflow()
@@ -37,11 +38,11 @@ data <- variableGrid %>%
 minData <- min(data)
 maxData <- max(data)
 
-
 SPY <- read.csv("./Data//SPY.csv") %>% 
   filter(Type == "call", K >= 200) %>% 
   mutate(MT = as.numeric(as.Date(Tt) - as.Date(Start)),
          r = 0.0153/91.5*MT) %>% 
+  filter(MT <= 30) %>% 
   select(S0, K, r, MT, C = P)
 
 NN <- load_model_hdf5(paste0("~/Desktop//P7//LargeDataFromServer"
@@ -62,18 +63,33 @@ funcCalibrate <- function(sigma) {
   nnPredict <- NN %>%  
     predict(cbind(variableRange, rep(sigma, n)))
   
-  return(sum(abs(nnPredict - SPY$C)^2))
+  return(sum(abs((nnPredict*(maxData - minData) + (maxData + minData))/2 - 
+                   SPY$C)^2))
 }
 
 ### Calibration --------------------------------------------------------------
 
-sigma0 <- 1
-lB     <- 0.001
-uB     <- 5
+sigma0 <- -0.1
+lB     <- -1
+uB     <- 1
 
 sigmaOptim <- optim(sigma0, funcCalibrate, 
                     lower = lB, upper = uB, 
                     method = "L-BFGS-B", 
                     control = list(trace = TRUE, maxit = 500))
 
-sigma <- (sigmaOptim$par*(maxData - minData) + (maxData + minData))/2
+sigma <- (sigmaOptim$par*(maxData - minData) + (maxData + minData))/2;sigma
+
+### Microbenchmark -----------------------------------------------------------
+variableGrid <- variableGrid %>% 
+  set_colnames(NULL) %>% 
+  as.matrix()
+
+microbenchmark(optim(sigma0, funcCalibrate, 
+                     lower = lB, upper = uB, 
+                     method = "L-BFGS-B", 
+                     control = list(trace = FALSE, maxit = 500)),
+               unit = "us")
+
+microbenchmark(NN %>% predict(variableGrid),
+               unit = "us", times = 10)

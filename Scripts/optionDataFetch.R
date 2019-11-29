@@ -1,8 +1,7 @@
 ### Packages -----------------------------------------------------------------
 library(quantmod)
 library(lubridate)
-library(dplyr)
-library(tidyr)
+library(tidyverse)
 
 ### Fetch function -----------------------------------------------------------
 

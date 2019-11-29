@@ -70,13 +70,14 @@ dataTrain$cHat <- dataTrain$cHat[,1]
 
 ### Heatmap ------------------------------------------------------------------
 dataPlotHeatmap <- dataTest %>% 
+  filter(MT > 2, K < 350) %>% 
   group_by(K, MT) %>% 
   summarise(n = n(),
-            diff = sum(abs(C - cHat))) %>% 
-  mutate(MAE = diff/n) %>% 
-  select(K, MT, MAE)
+            diff = sum(abs((C - cHat))/C)*100) %>% 
+  mutate(MPE = diff/n) %>% 
+  select(K, MT, MPE)
 
-ggplot(data = dataPlotHeatmap, aes(y = MT, x = K, fill = MAE)) +
+ggplot(data = dataPlotHeatmap, aes(y = MT, x = K, fill = MPE)) +
   geom_tile() +
   labs(title  = "",
        x = "Strike",
