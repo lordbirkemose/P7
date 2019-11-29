@@ -55,7 +55,6 @@ variableRange %<>%
   as.matrix()
 
 ### Calibration function -----------------------------------------------------
-
 n <- nrow(variableRange)
 
 funcCalibrate <- function(sigma) {
@@ -68,7 +67,6 @@ funcCalibrate <- function(sigma) {
 }
 
 ### Calibration --------------------------------------------------------------
-
 sigma0 <- -0.1
 lB     <- -1
 uB     <- 1

@@ -15,20 +15,17 @@ variableRange <- SPY %>%
   select(-C)
 
 ### Calibration function -----------------------------------------------------
-BlackScholesFun <- function(S0, K, r, MT, sigma) {
-  d1 <- (log(S0/K) + (r + sigma^2/2)*MT)/(sigma*sqrt(MT))
-  d2 <- d1 - sigma*sqrt(MT)
-  
-  C <- pnorm(d1)*S0 - pnorm(d2)*K*exp(-r*MT)
-  
-  return(C)
+monteCarloFun <- function(S0, K, r, MT, sigma) {
+  sT <- S0*exp((r - .5*sigma^2)*MT + sigma*sqrt(MT)*rnorm(100000))
+  cHat <- pmax(sT - K, 0)*exp(-r*MT)
+  return(mean(cHat))
 }
 
 n <- nrow(variableRange)
 
 funcCalibrate <- function(sigma) {
   
-  blackScholes <- mapply(BlackScholesFun, 
+  blackScholes <- mapply(monteCarloFun, 
                          S0 = variableRange$S0,
                          K = variableRange$K,
                          r = variableRange$r,
@@ -63,7 +60,7 @@ r <- seq(1, 30, by = 2)*0.0153/91.5
 sigma <- seq(0.1, 1, by = 0.05) # Volatility of the instrument
 
 variableGrid <- expand.grid(S0 = S0, K = K, r = r, MT = MT, sigma = sigma)
-microbenchmark(mapply(BlackScholesFun, 
+microbenchmark(mapply(monteCarloFun, 
                       S0 = variableGrid$S0,
                       K = variableGrid$K,
                       r = variableGrid$r,
