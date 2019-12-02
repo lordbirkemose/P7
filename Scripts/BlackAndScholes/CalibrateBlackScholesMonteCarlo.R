@@ -1,6 +1,7 @@
 ### Packages -----------------------------------------------------------------
 library(tidyverse)
 library(magrittr)
+library(parallel)
 library(microbenchmark)
 
 ### Get data -----------------------------------------------------------------
@@ -16,7 +17,7 @@ variableRange <- SPY %>%
 
 ### Calibration function -----------------------------------------------------
 monteCarloFun <- function(S0, K, r, MT, sigma) {
-  sT <- S0*exp((r - .5*sigma^2)*MT + sigma*sqrt(MT)*rnorm(100000))
+  sT <- S0*exp((r - .5*sigma^2)*MT + sigma*sqrt(MT)*rnorm(60000))
   cHat <- pmax(sT - K, 0)*exp(-r*MT)
   return(mean(cHat))
 }
@@ -25,7 +26,7 @@ n <- nrow(variableRange)
 
 funcCalibrate <- function(sigma) {
   
-  blackScholes <- mapply(monteCarloFun, 
+  blackScholes <- mcmapply(monteCarloFun, 
                          S0 = variableRange$S0,
                          K = variableRange$K,
                          r = variableRange$r,
@@ -36,21 +37,25 @@ funcCalibrate <- function(sigma) {
 }
 
 ### Calibration --------------------------------------------------------------
+# sigma0 <- 2
+# lB     <- 0.01
+# uB     <- 5
+# 
+# sigmaOptim <- optim(sigma0, funcCalibrate, 
+#                     lower = lB, upper = uB, 
+#                     method = "L-BFGS-B", 
+#                     control = list(trace = TRUE, maxit = 500))
+
+### Microbenchmark -----------------------------------------------------------
 sigma0 <- 2
 lB     <- 0.01
 uB     <- 5
 
-sigmaOptim <- optim(sigma0, funcCalibrate, 
-                    lower = lB, upper = uB, 
-                    method = "L-BFGS-B", 
-                    control = list(trace = TRUE, maxit = 500))
-
-### Microbenchmark -----------------------------------------------------------
 microbenchmark(optim(sigma0, funcCalibrate, 
                      lower = lB, upper = uB, 
                      method = "L-BFGS-B", 
                      control = list(trace = FALSE, maxit = 500)),
-               unit = "us")
+               unit = "us", times = 1)
 
 S0 <- seq(305, 309, by = 1) # Current instrument price
 K <- seq(200, 350, by = 1) # Strike price
@@ -66,4 +71,4 @@ microbenchmark(mapply(monteCarloFun,
                       r = variableGrid$r,
                       MT = variableGrid$MT, 
                       sigma = variableGrid$sigma),
-               unit = "us", times = 10)
+               unit = "us", times = 1)
