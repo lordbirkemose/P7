@@ -3,12 +3,16 @@ library(tidyverse)
 library(parallel)
 
 ### Variable grid ------------------------------------------------------------
-
+S0 <- seq(305, 309, by = 1) # Current instrument price
+K <- seq(200, 350, by = 1) # Strike price
+MT <- seq(1, 30, by = 1) # Time to maturity
+# r <- seq(0, 2.5, by = 0.3) # Risk free rate
+r <- seq(1, 30, by = 2)*0.0153/91.5
 
 ### GARCH Monte Carlo function -----------------------------------------------
 set.seed(2019)
 
-garchMonteCarloFun <- function(omega, b, a, mu, K, MT, r, s0, N = 100000){
+garchMonteCarloFun <- function(omega, b, a, mu, K, MT, r, s0, N = 50000){
   h <- s <- matrix(NA, nrow = N, ncol = MT)
   eps <- matrix(rnorm(MT*N), nrow = N, ncol = MT)
   h[,1] <- 0.15^2/252
@@ -26,5 +30,7 @@ garchMonteCarloFun <- function(omega, b, a, mu, K, MT, r, s0, N = 100000){
   return(mean(g))
 }
 
-garchMonteCarloFun(omega = .2, b = .2, a = .1, mu = 0, K = 10, MT = 10,
-                   r = 0.1, s0 = 8, N = 100000)
+# garchMonteCarloFun(omega = .2, b = .2, a = .1, mu = 0, K = 10, MT = 10,
+#                    r = 0.1, s0 = 8, N = 100000)
+
+### Simulation ---------------------------------------------------------------
