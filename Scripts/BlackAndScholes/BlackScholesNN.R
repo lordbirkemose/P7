@@ -1,23 +1,17 @@
 ### Packagets ----------------------------------------------------------------
 require("keras")
 require("tensorflow")
-require("lubridate")
-require("tidyr")
-require("dplyr")
-require("ggplot2")
+require("tidyverse")
 
 ### Tensorflow setup ---------------------------------------------------------
-Sys.setenv(WORKON_HOME="/q/student/mnorda16")
 install_tensorflow()
 
 ### Load data ----------------------------------------------------------------
-
 data <- read.csv("./Data//BlackScholesData.csv.gz")
 minData <- min(data)
 maxData <- max(data)
 
 ### Test and training set ----------------------------------------------------
-
 set.seed(123)
 
 indTrain <- sample(nrow(data), nrow(data)*0.75)
@@ -25,30 +19,28 @@ indTrain <- sample(nrow(data), nrow(data)*0.75)
 dataTrain <- (2*data[indTrain, ] - maxData - minData)/(maxData - minData)
 dataTrain <- dataTrain %>% 
   select(-C) %>% 
-  as.matrix()
+  as.matrix() %>% 
+  set_colnames(NULL)
+
 dataTest <- (2*data[-indTrain, ] - maxData - minData)/(maxData - minData)
 dataTest <- dataTest %>% 
   select(-C) %>% 
-  as.matrix()
-
-dimnames(dataTrain) <- NULL
-dimnames(dataTest) <- NULL
+  as.matrix() %>% 
+  set_colnames(NULL)
 
 dataTrainTarget <- data[indTrain, ] %>% 
   mutate(C = (2*C - maxData - minData)/(maxData - minData)) %>% 
   select(C) %>% 
-  as.matrix()
+  as.matrix() %>% 
+  set_colnames(NULL)
 
 dataTestTarget <- data[-indTrain, ] %>% 
   mutate(C = (2*C - maxData - minData)/(maxData - minData)) %>% 
   select(C) %>% 
-  as.matrix()
-
-dimnames(dataTrainTarget) <- NULL
-dimnames(dataTestTarget) <- NULL
+  as.matrix() %>% 
+  set_colnames(NULL)
 
 ### Construction the model ---------------------------------------------------
-
 BlackScholesNnDropout <- keras_model_sequential()
 
 BlackScholesNnDropout %>% 
@@ -65,7 +57,6 @@ BlackScholesNnDropout %>%
 earlyStop <- callback_early_stopping(monitor = "val_loss", patience = 50)
 
 ### Compile and fit ----------------------------------------------------------
-
 BlackScholesNnDropout %>% compile(
   loss = 'mse', 
   optimizer = optimizer_rmsprop(lr = 0.001, rho = 0.9), 
@@ -86,7 +77,6 @@ history <- BlackScholesNnDropout %>%
 plot(history)
 
 ### Predict ------------------------------------------------------------------
-
 testPredict <- BlackScholesNnDropout %>% 
   predict(dataTest)
 trainPredict <- BlackScholesNnDropout %>% 
@@ -108,5 +98,3 @@ save(dataTest,
 
 write.csv(dataTrain, gzfile("./Workspaces//BlackScholesDataTrain.csv.gz"), 
           row.names = FALSE)
-
-quit("no")
