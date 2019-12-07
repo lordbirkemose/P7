@@ -6,13 +6,11 @@ library(microbenchmark)
 
 ### Get data -----------------------------------------------------------------
 SPY <- read.csv("./Data//SPY.csv") %>% 
-  filter(Type == "call", K >= 200) %>% 
+  filter(Type == "call", K >= 250, K <= 300) %>% 
   mutate(MT = as.numeric(as.Date(Tt) - as.Date(Start)),
          r = 0.0153/91.5*MT) %>% 
-  filter(MT <= 30, MT > 1) %>% 
+  filter(MT <= 10, MT > 1) %>% 
   select(S0, K, r, MT, C = P)
-
-SPY <- SPY[1:200,]
 
 variableRange <- SPY %>%  
   select(-C)

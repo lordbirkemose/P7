@@ -15,6 +15,8 @@ mu <- seq(-0.10, 0.20, by = 0.05)
 variableGrid <- expand_grid(s0 = s0, K = K, r = r, MT = MT,
                             omega = omega, b = b, a = a, mu = mu)
 
+variableGrid <- variableGrid[300001:nrow(variableGrid),]
+
 ### GARCH Monte Carlo function -----------------------------------------------
 set.seed(2019)
 
@@ -27,7 +29,7 @@ garchMonteCarloFun <- function(omega, b, a, mu, K, MT, r, s0, N = 50000){
   for (i in 1:(MT - 1)) {
     lambda <- (mu - r)/h[,i]
     h[,i+1] <- omega + b*h[,i] + a*(sqrt(h[,i])*eps[,i] + mu - r - 
-                                        lambda*sqrt(h[,i]))^2
+                                      lambda*sqrt(h[,i]))^2
     s[,i+1] <- exp(r - .5*h[,i+1] + mu - r + sqrt(h[,i+1]))*s[,i]
   }
   
@@ -39,7 +41,7 @@ garchMonteCarloFun <- function(omega, b, a, mu, K, MT, r, s0, N = 50000){
 ### Simulation ---------------------------------------------------------------
 cores <- detectCores() - 1
 
-data <- pbmapply(garchMonteCarloFun,
+data <- mcmapply(garchMonteCarloFun,
                  s0 = variableGrid$s0, 
                  K = variableGrid$K, 
                  r = variableGrid$r, 
@@ -47,7 +49,8 @@ data <- pbmapply(garchMonteCarloFun,
                  omega = variableGrid$omega, 
                  b = variableGrid$b, 
                  a = variableGrid$a, 
-                 mu = variableGrid$mu)
+                 mu = variableGrid$mu,
+                 mc.cores = cores)
 
 ### Save ---------------------------------------------------------------------
-write.csv("./Data//garch.csv.gz")
+write.csv(data, "./Data//garch3.csv.gz")
