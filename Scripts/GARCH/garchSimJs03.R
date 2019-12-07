@@ -41,6 +41,7 @@ garchMonteCarloFun <- function(omega, b, a, mu, K, MT, r, s0, N = 50000){
 ### Simulation ---------------------------------------------------------------
 cores <- detectCores() - 1
 
+start <- Sys.time()
 data <- mcmapply(garchMonteCarloFun,
                  s0 = variableGrid$s0, 
                  K = variableGrid$K, 
@@ -51,6 +52,9 @@ data <- mcmapply(garchMonteCarloFun,
                  a = variableGrid$a, 
                  mu = variableGrid$mu,
                  mc.cores = cores)
+end <- Sys.time
+time <- end - start
 
 ### Save ---------------------------------------------------------------------
 write.csv(data, "./Data//garch3.csv.gz")
+save(time, "./Workspaces/time3")
