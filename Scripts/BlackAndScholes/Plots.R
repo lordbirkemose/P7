@@ -61,9 +61,9 @@ C <- mapply(BlackScholesFun,
 data <- variableGrid %>% 
   mutate(C = C)
 
-load("~/Desktop//P7//LargeDataFromServer//BlackScholesNnDataTest.Rdata")
-NN <- load_model_hdf5(paste0("~/Desktop//P7//LargeDataFromServer"
-                             ,"//BlackScholesNn.h5"))
+load("~/Desktop/P7/LargeDataFromServer/BlackScholesNnDataTest.Rdata")
+NN <- load_model_hdf5(paste0("~/Desktop/P7/LargeDataFromServer"
+                             ,"/BlackScholesNn.h5"))
 
 dataTest$cHat <- dataTest$cHat[,1]
 dataTrain$cHat <- dataTrain$cHat[,1]
@@ -74,10 +74,10 @@ dataPlotHeatmap <- dataTest %>%
   group_by(K, MT) %>% 
   summarise(n = n(),
             diff = sum(abs((C - cHat))/C)*100) %>% 
-  mutate(MPE = diff/n) %>% 
-  select(K, MT, MPE)
+  mutate(MAPE = diff/n) %>% 
+  select(K, MT, MAPE)
 
-ggplot(data = dataPlotHeatmap, aes(y = MT, x = K, fill = MPE)) +
+ggplot(data = dataPlotHeatmap, aes(y = MT, x = K, fill = MAPE)) +
   geom_tile() +
   labs(title  = "",
        x = "Strike",
@@ -116,7 +116,7 @@ plot_ly(data = dataPlotNn, x = dataPlotNn$K, y = dataPlotNn$C,
            zaxis = list(title = "Sigma")
          ))
 
-### Line plot ----------------------------------------------------------------
+### Volatility plot ----------------------------------------------------------
 dataLine <- dataTest %>% 
   rbind(dataTrain) %>% 
   filter(K == 250, MT == 10, S0 == 305, 
@@ -124,12 +124,12 @@ dataLine <- dataTest %>%
   select(sigma, C, cHat)
   
 ggplot(data = dataLine) +
-  geom_line(aes(x = sigma, y = C, colour = "Black & Scholes")) +
-  geom_line(aes(x = sigma, y = cHat, colour = "Neural Network")) +
+  geom_line(aes(x = sigma, y = C, colour = "Black-Scholes")) +
+  geom_line(aes(x = sigma, y = cHat, colour = "Neural network")) +
   xlab(TeX("$\\sigma$")) +
   ylab("Call price") +
-  scale_colour_manual("", values = c("Black & Scholes" = colors[1], 
-                                     "Neural Network" = colors[2])) +
+  scale_colour_manual("", values = c("Black-Scholes" = colors[1], 
+                                     "Neural network" = colors[2])) +
   themeLegend
 
 ggsave(file = paste0("./Plots/","volatility",".eps"), 
@@ -137,14 +137,14 @@ ggsave(file = paste0("./Plots/","volatility",".eps"),
 
 ### BS vs NN -----------------------------------------------------------------
 set.seed(1)
-dataCompare <- dataTest[sample(nrow(dataTest), nrow(dataTest)*0.1),]
+dataCompare <- dataTest[sample(nrow(dataTest), nrow(dataTest)*0.01),]
 axisMax <- range(dataCompare$C, dataCompare$cHat)[2]
 
 ggplot(data = dataCompare) + 
   geom_point(aes(x = C, y = cHat), color = colors[3]) +
   geom_abline(slope = 1, intercept = 0) +
-  xlab("Black & Scholes") +
-  ylab("Neural Network") +
+  xlab("Black-Scholes") +
+  ylab("Neural network") +
   scale_x_continuous(limits = c(0, axisMax)) + 
   scale_y_continuous(limits = c(0, axisMax)) +
   theme

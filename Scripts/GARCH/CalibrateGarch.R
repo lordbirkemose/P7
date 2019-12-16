@@ -6,7 +6,7 @@ library(microbenchmark)
 
 ### Get data -----------------------------------------------------------------
 SPY <- read.csv("./Data//SPY.csv") %>% 
-  filter(Type == "call", K >= 250, K <= 300) %>% 
+  filter(Type == "call", K >= 200, K <= 300) %>% 
   mutate(MT = as.numeric(as.Date(Tt) - as.Date(Start)),
          r = 0.0153/91.5*MT) %>% 
   filter(MT <= 10, MT > 1) %>% 
@@ -74,5 +74,5 @@ ci <- c(-.99, -.99)
 microbenchmark(constrOptim(theta0, funcCalibrate, 
                            ui = ui, ci = ci, 
                            control = list(trace = TRUE, maxit = 500)),
-               unit = "us")
+               unit = "us", times = 1)
 

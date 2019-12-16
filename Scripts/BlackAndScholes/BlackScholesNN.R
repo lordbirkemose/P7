@@ -2,6 +2,7 @@
 require("keras")
 require("tensorflow")
 require("tidyverse")
+library(magrittr)
 
 ### Tensorflow setup ---------------------------------------------------------
 install_tensorflow()

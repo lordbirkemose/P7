@@ -53,7 +53,7 @@ microbenchmark(optim(sigma0, funcCalibrate,
                      lower = lB, upper = uB, 
                      method = "L-BFGS-B", 
                      control = list(trace = FALSE, maxit = 500)),
-               unit = "us")
+               unit = "s")
 
 S0 <- seq(305, 309, by = 1) # Current instrument price
 K <- seq(200, 350, by = 1) # Strike price
